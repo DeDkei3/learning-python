@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавить товар | HARDWARE STORE</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container navbar-content">
+            <a href="/" class="logo">⚡ HARDWARE STORE</a>
+            <nav class="nav-links">
+                <a href="/admin" class="active admin-link">← Назад в админку</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="margin-top: 30px; margin-bottom: 60px; max-width: 700px;">
+        <div style="background: var(--bg-card); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
+            <h1 style="font-size: 1.6rem; color: var(--text-main); margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Добавление нового товара</h1>
+
+            <form action="/admin/add" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 16px;">
+                
+                <div>
+                    <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px;">Название товара:</label>
+                    <input type="text" name="name" required class="form-control" placeholder="например, Игровая мышь Logitech G Pro X">
+                </div>
+
+                <div style="display: flex; gap: 15px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px;">Категория:</label>
+                        <input type="text" name="category" required class="form-control" placeholder="например, Периферия">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px;">Цена (BYN):</label>
+                        <input type="number" step="0.01" name="price" required class="form-control" placeholder="150.00">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px;">Количество:</label>
+                        <input type="number" name="stock" value="10" required class="form-control">
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px;">Изображение товара:</label>
+                    <input type="file" name="image" accept="image/*" class="form-control" style="padding: 8px;">
+                </div>
+
+                <!-- Динамические характеристики -->
+                <div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <label style="font-size: 0.95rem; font-weight: 600; color: var(--text-main);">Характеристики (необязательно):</label>
+                        <button type="button" onclick="addCharRow()" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;">+ Добавить характеристику</button>
+                    </div>
+
+                    <div id="chars-container" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" name="char_key[]" placeholder="Параметр (напр. Сенсор)" class="form-control">
+                            <input type="text" name="char_value[]" placeholder="Значение (напр. HERO 25K)" class="form-control">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="padding: 12px; font-size: 1rem; margin-top: 15px;">Сохранить товар</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        function addCharRow() {
+            const container = document.getElementById('chars-container');
+            const div = document.createElement('div');
+            div.style.display = 'flex';
+            div.style.gap = '10px';
+            div.innerHTML = `
+                <input type="text" name="char_key[]" placeholder="Параметр" class="form-control">
+                <input type="text" name="char_value[]" placeholder="Значение" class="form-control">
+            `;
+            container.appendChild(div);
+        }
+    </script>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 HARDWARE STORE.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

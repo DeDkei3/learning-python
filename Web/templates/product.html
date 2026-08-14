@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ product.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙 / ☀️</button>
+    <div style="margin-bottom: 15px;">
+        <a href="/cart" class="btn-buy" style="display: inline-block; background: #2980b9; text-decoration: none;">🛒 Перейти в корзину</a>
+    </div>
+
+    <div style="max-width: 700px; margin: 0 auto;">
+        <div style="margin-bottom: 20px;">
+            <a href="/catalog">← Вернуться в каталог</a>
+        </div>
+
+        <h1>{{ product.name }}</h1>
+        
+        {% if product.image %}
+            <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}" style="max-width: 100%; height: auto; border-radius: 8px; margin-bottom: 20px;">
+        {% endif %}
+        
+        <p style="font-size: 24px; color: #27ae60; font-weight: bold;">{{ product.price }} руб.</p>
+        <p style="color: #7f8c8d;">Категория: {{ product.category }}</p>
+        
+        <div style="font-size: 16px; margin-bottom: 20px;">
+            {% if product.stock > 0 %}
+                <span style="color: #27ae60; font-weight: bold;">📦 На складе: {{ product.stock }} шт.</span>
+            {% else %}
+                <span style="color: #e74c3c; font-weight: bold;">❌ Товар распродан / Нет в наличии</span>
+            {% endif %}
+        </div>
+        
+        {% if product.stock > 0 %}
+            <form action="/cart/add/{{ product.id }}" method="POST" style="margin:0; padding:0; background:none; border:none; display: inline-block; margin-bottom: 30px;">
+                <button type="submit" class="btn-buy" style="font-size: 18px; padding: 12px 24px;">Добавить в корзину 🛒</button>
+            </form>
+        {% else %}
+            <button disabled style="background: #95a5a6; color: white; cursor: not-allowed; font-size: 18px; padding: 12px 24px; border: none; border-radius: 4px; display: inline-block; margin-bottom: 30px;">Нет на складе</button>
+        {% endif %}
+
+        <h3>Характеристики</h3>
+        {% if chars %}
+            <table>
+                {% for char in chars %}
+                    <tr>
+                        <td><b>{{ char.key_name }}</b></td>
+                        <td>{{ char.key_value }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <p>У этого товара пока нет характеристик.</p>
+        {% endif %}
+
+        <h3 style="margin-top: 40px;">Отзывы</h3>
+        {% if reviews %}
+            {% for rev in reviews %}
+                <div style="background: var(--filter-bg); border: 1px solid var(--border-color); padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <b>{{ rev.author }}</b>
+                        <span style="color: #f39c12;">⭐ {{ rev.rating }}/5</span>
+                    </div>
+                    <p style="margin-top: 8px;">{{ rev.text }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Пока нет отзывов. Будьте первыми!</p>
+        {% endif %}
+
+        <h3 style="margin-top: 30px;">Оставить отзыв</h3>
+        <form method="POST">
+            <label>Ваше имя:</label>
+            <input type="text" name="author" required>
+
+            <label>Оценка (от 1 до 5):</label>
+            <select name="rating">
+                <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                <option value="4">⭐⭐⭐⭐ (4)</option>
+                <option value="3">⭐⭐⭐ (3)</option>
+                <option value="2">⭐⭐ (2)</option>
+                <option value="1">⭐ (1)</option>
+            </select>
+
+            <label>Текст отзыва:</label>
+            <textarea name="text" rows="4" style="width: 100%; padding: 10px; background: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; margin-bottom: 15px;" required></textarea>
+
+            <button type="submit">Отправить отзыв</button>
+        </form>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        }
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+    </script>
+</body>
+</html>

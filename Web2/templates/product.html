@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }} | HARDWARE STORE</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container navbar-content">
+            <a href="/" class="logo">⚡ HARDWARE STORE</a>
+            <nav class="nav-links">
+                <a href="/">Главная</a>
+                <a href="/catalog" class="active">Каталог</a>
+                <a href="/cart">Корзина</a>
+                <a href="/admin" class="admin-link">Панель администратора</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="margin-top: 40px; margin-bottom: 60px;">
+        <a href="/catalog" class="btn btn-secondary" style="margin-bottom: 20px;">← Назад в каталог</a>
+
+        <div style="background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-wrap: wrap; gap: 30px; padding: 30px;">
+            
+            <!-- Изображение -->
+            <div style="flex: 1; min-width: 280px; max-width: 450px; height: 350px; background: #0f172a; border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                {% if product.image %}
+                    <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                    <div class="no-image" style="font-size: 1rem;">Нет изображения</div>
+                {% endif %}
+            </div>
+
+            <!-- Детали товара -->
+            <div style="flex: 1; min-width: 280px; display: flex; flex-direction: column;">
+                <span class="badge">{{ product.category or 'Общее' }}</span>
+                <h1 style="font-size: 2rem; color: var(--text-main); margin-bottom: 15px;">{{ product.name }}</h1>
+                
+                <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent); margin-bottom: 20px;">
+                    {{ "%.2f"|format(product.price) }} BYN
+                </div>
+
+                <form action="{{ url_for('add_to_cart', product_id=product.id) }}" method="POST" style="margin-bottom: 30px;">
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 28px; font-size: 1rem;">Добавить в корзину</button>
+                </form>
+
+                <!-- Таблица характеристик -->
+                <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">Технические характеристики</h3>
+                {% if chars %}
+                    <div class="table-card" style="margin: 0;">
+                        <table>
+                            <tbody>
+                                {% for char in chars %}
+                                    <tr>
+                                        <td style="color: var(--text-muted); width: 40%;">{{ char.key_name }}</td>
+                                        <td style="font-weight: 600;">{{ char.key_value }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Характеристики для данного товара не указаны.</p>
+                {% endif %}
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 HARDWARE STORE. Все права защищены.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

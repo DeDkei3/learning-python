@@ -1,0 +1,13 @@
+from turtle import left
+
+
+free = float(input("how menay gb u have on u hdd:  "))
+gamesize = float(input("how meny game size: "))
+left = free - gamesize
+if gamesize > free:
+    print("you cant  install this game")
+elif left <10:
+    print(f"you can install this game but you have only {left} gb left")
+else:
+    print("you can install this game")
+

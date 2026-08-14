@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель администратора | HARDWARE STORE</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container navbar-content">
+            <a href="/" class="logo">⚡ HARDWARE STORE <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">[ADMIN]</span></a>
+            <nav class="nav-links">
+                <a href="/">Главная</a>
+                <a href="/catalog">Каталог</a>
+                <a href="/admin" class="active admin-link">Админка</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="margin-top: 30px; margin-bottom: 60px;">
+        
+        <!-- Управление товарами -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2 style="font-size: 1.5rem; color: var(--text-main);">Список товаров</h2>
+            <a href="/admin/add" class="btn btn-primary">+ Добавить новый товар</a>
+        </div>
+
+        <div class="table-card" style="margin-bottom: 40px;">
+            {% if products %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Фото</th>
+                            <th>Название</th>
+                            <th>Категория</th>
+                            <th>Цена</th>
+                            <th>Остаток</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                            <tr>
+                                <td>#{{ product.id }}</td>
+                                <td>
+                                    <div style="width: 45px; height: 45px; background: #0f172a; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
+                                        {% if product.image %}
+                                            <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                                        {% else %}
+                                            <span style="font-size: 0.65rem; color: var(--text-muted);">Нет</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td style="font-weight: 600;">{{ product.name }}</td>
+                                <td><span class="badge">{{ product.category or 'Общее' }}</span></td>
+                                <td style="color: var(--accent); font-weight: 700;">{{ "%.2f"|format(product.price) }} BYN</td>
+                                <td>{{ product.stock }} шт.</td>
+                                <td>
+                                    <div style="display: flex; gap: 6px;">
+                                        <a href="/admin/product/{{ product.id }}" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;">Характеристики</a>
+                                        <a href="/admin/delete/{{ product.id }}" onclick="return confirm('Удалить этот товар?')" class="btn btn-danger" style="padding: 4px 10px; font-size: 0.8rem;">Удалить</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div style="padding: 30px; text-align: center; color: var(--text-muted);">
+                    Товары пока не добавлены.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Управление заказами -->
+        <h2 style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 16px;">Поступившие заказы</h2>
+        <div class="table-card">
+            {% if orders %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Клиент</th>
+                            <th>Телефон</th>
+                            <th>Адрес</th>
+                            <th>Сумма</th>
+                            <th>Статус</th>
+                            <th>Обновить статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                            <tr>
+                                <td><strong>#{{ order.id }}</strong></td>
+                                <td>{{ order.customer_name }}</td>
+                                <td>{{ order.phone }}</td>
+                                <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ order.address }}</td>
+                                <td style="color: var(--accent); font-weight: 700;">{{ "%.2f"|format(order.total_price) }} BYN</td>
+                                <td><span class="badge" style="background: rgba(56, 189, 248, 0.1);">{{ order.status }}</span></td>
+                                <td>
+                                    <form action="/admin/status/{{ order.id }}" method="POST" style="display: flex; gap: 6px; margin: 0;">
+                                        <select name="status" class="form-control" style="padding: 4px 8px; font-size: 0.8rem; width: auto;">
+                                            <option value="Новый" {% if order.status == 'Новый' %}selected{% endif %}>Новый</option>
+                                            <option value="В обработке" {% if order.status == 'В обработке' %}selected{% endif %}>В обработке</option>
+                                            <option value="Отправлен" {% if order.status == 'Отправлен' %}selected{% endif %}>Отправлен</option>
+                                            <option value="Завершен" {% if order.status == 'Завершен' %}selected{% endif %}>Завершен</option>
+                                            <option value="Отменен" {% if order.status == 'Отменен' %}selected{% endif %}>Отменен</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;">OK</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div style="padding: 30px; text-align: center; color: var(--text-muted);">
+                    Заказов пока нет.
+                </div>
+            {% endif %}
+        </div>
+
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 HARDWARE STORE. Панель управления.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

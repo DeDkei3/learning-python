@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Оформление заказа</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% if success %}
+        <h2>Спасибо за заказ, {{ customer_name }}! 🎉</h2>
+        <p>Мы приняли ваш запрос на товар: <b>{{ item_name }}</b> (кол-во: {{ quantity }}).</p>
+        <p>Статус: <b>Новый</b></p>
+        <br>
+        <a href="/">На главную</a> | 
+        <a href="/admin">Посмотреть все заказы</a> | 
+        <a href="/catalog">В каталог</a>
+    {% else %}
+        <h2>🛍️ Оформление заказа</h2>
+        <form method="POST">
+            <label>Ваше имя:</label><br>
+            <input type="text" name="name" required><br><br>
+            
+            <label>Выбранный товар (из каталога):</label><br>
+            <!-- Поле защищено от ручного ввода атрибутом readonly -->
+            <input type="text" name="item" value="{{ selected_item }}" readonly style="background-color: #e9ecef; cursor: not-allowed;"><br><br>
+            
+            <label>Количество:</label><br>
+            <input type="number" name="quantity" value="1" min="1" required><br><br>
+            
+            <button type="submit">Подтвердить заказ</button>
+        </form>
+        <br><a href="/catalog">← Выбрать другой товар в каталоге</a> | <a href="/">На главную</a>
+    {% endif %}
+</body>
+<button class="theme-toggle" onclick="toggleTheme()">🌙 / ☀️</button>
+
+<script>
+    function toggleTheme() {
+        document.body.classList.toggle('dark-theme');
+        localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+    }
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-theme');
+    }
+</script>
+
+</html>

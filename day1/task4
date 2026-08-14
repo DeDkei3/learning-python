@@ -1,0 +1,148 @@
+import json
+import os
+
+FILE_NAME = "inventory_v2.json"
+MAX_WEIGHT = 10.0  # Максимально допустимый вес в кг
+
+
+# 1. ЗАГРУЗКА ИНВЕНТАРЯ
+def load_inventory():
+    if os.path.exists(FILE_NAME):
+        with open(FILE_NAME, "r", encoding="utf-8") as f:
+            print("💾 Сохранение найдено! Инвентарь загружен.")
+            return json.load(f)
+    else:
+        print("🆕 Сохранение не найдено. Создан базовый инвентарь.")
+        return [
+            {"name": "Pan", "weight": 1.5, "damage": 8, "price": 40},
+            {"name": "Knife", "weight": 0.5, "damage": 15, "price": 100},
+            {"name": "Rope", "weight": 0.3, "damage": 0, "price": 15}
+        ]
+
+
+# 2. СОХРАНЕНИЕ В ФАЙЛ
+def save_inventory(inventory):
+    with open(FILE_NAME, "w", encoding="utf-8") as f:
+        json.dump(inventory, f, ensure_ascii=False, indent=4)
+
+
+# 3. ПОДСЧЁТ ОБЩЕГО ВЕСА
+def get_total_weight(inventory):
+    total = sum(item["weight"] for item in inventory)
+    return round(total, 2)
+
+
+# 4. ДОБАВЛЕНИЕ ПРЕДМЕТА С ПРОВЕРКОЙ НА ПЕРЕВЕС
+def add_item(inventory):
+    print("\n--- СОЗДАНИЕ ПРЕДМЕТА ---")
+    
+    current_weight = get_total_weight(inventory)
+    free_space = round(MAX_WEIGHT - current_weight, 2)
+    
+    print(f"💡 Свободно места: {free_space} кг из {MAX_WEIGHT} кг")
+    
+    if free_space <= 0:
+        print("❌ Инвентарь полностью заполнен по весу! Освободи место.")
+        return
+
+    name = input("Название предмета: ").strip()
+    if not name:
+        print("❌ Название не может быть пустым!")
+        return
+
+    # Проверка на дубликат по имени (без учёта регистра)
+    for item in inventory:
+        if item["name"].lower() == name.lower():
+            print(f"❌ Предмет '{name}' уже есть в инвентаре!")
+            return
+
+    try:
+        weight = float(input("Вес предмета (кг): "))
+        if weight <= 0:
+            print("❌ Вес должен быть больше 0!")
+            return
+
+        # Защита от перевеса
+        if weight > free_space:
+            print(f"❌ Перевес! Предмет слишком тяжелый ({weight} кг). Доступно всего {free_space} кг.")
+            return
+
+        damage = int(input("Урон предмета: "))
+        price = int(input("Цена предмета: "))
+        
+        new_item = {
+            "name": name,
+            "weight": weight,
+            "damage": damage,
+            "price": price
+        }
+        
+        inventory.append(new_item)
+        save_inventory(inventory)
+        print(f"✅ Предмет '{name}' успешно добавлен и сохранён!")
+
+    except ValueError:
+        print("❌ Ошибка! Вес, урон и цена должны быть числами!")
+
+
+# 5. ПРОВЕРКА И УДАЛЕНИЕ ПРЕДМЕТА
+def check_item(inventory):
+    if not inventory:
+        print("Инвентарь пуст!")
+        return
+
+    try:
+        slot = int(input(f"Какой слот проверить (1-{len(inventory)}): "))
+        if slot <= 0 or slot > len(inventory):
+            print("❌ Несуществующий слот!")
+            return
+
+        item = inventory[slot - 1]
+        
+        print("\n--- ИНФОРМАЦИЯ О ПРЕДМЕТЕ ---")
+        print(f"📌 Название: {item['name']}")
+        print(f"⚖️ Вес:      {item['weight']} кг")
+        print(f"⚔️ Урон:     {item['damage']}")
+        print(f"💰 Цена:     {item['price']} монет")
+        print("----------------------------")
+
+        action = input("Удалить предмет? (1 - да / 2 - нет): ")
+        if action == "1":
+            removed = inventory.pop(slot - 1)
+            save_inventory(inventory)
+            print(f"🗑 Вы выбросили: {removed['name']}")
+
+    except ValueError:
+        print("❌ Вводи только числа!")
+
+
+# 6. ГЛАВНЫЙ ЦИКЛ ПРОГРАММЫ
+def main():
+    inventory = load_inventory()
+
+    while True:
+        total_w = get_total_weight(inventory)
+        print(f"\n=== ИНВЕНТАРЬ (Предметов: {len(inventory)} | Вес: {total_w}/{MAX_WEIGHT} кг) ===")
+        
+        for idx, item in enumerate(inventory, start=1):
+            print(f"{idx}. {item['name']} [{item['weight']}кг | ⚔️{item['damage']} | 💰{item['price']}]")
+
+        print("\n1. Добавить предмет")
+        print("2. Осмотреть / Удалить слот")
+        print("3. Выход")
+        
+        choice = input("Выбери действие (1-3): ")
+        
+        if choice == "1":
+            add_item(inventory)
+        elif choice == "2":
+            check_item(inventory)
+        elif choice == "3":
+            print("Выход из программы.")
+            break
+        else:
+            print("Неверный выбор!")
+
+
+if __name__ == "__main__":
+    main()

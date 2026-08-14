@@ -1,0 +1,9 @@
+free = float(input("how menay gb u have on u hdd:  "))
+gamesize = float(input("how meny game size: "))
+if gamesize > free:
+    print("you cant  install this game")
+else:
+    print("you can install this game")
+
+
+

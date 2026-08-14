@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Каталог товаров | HARDWARE STORE</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Навигационная панель -->
+    <header class="navbar">
+        <div class="container navbar-content">
+            <a href="/" class="logo">⚡ HARDWARE STORE</a>
+            <nav class="nav-links">
+                <a href="/">Главная</a>
+                <a href="/catalog" class="active">Каталог</a>
+                <a href="/cart">Корзина</a>
+                <a href="/admin" class="admin-link">Панель администратора</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="margin-top: 30px; margin-bottom: 60px;">
+        <h1 style="font-size: 1.8rem; color: var(--text-main); margin-bottom: 10px;">Каталог товаров</h1>
+
+        <!-- Блок фильтрации и поиска -->
+        <div class="filter-card">
+            <form action="/catalog" method="GET" class="filter-grid">
+                
+                <!-- Поиск -->
+                <div class="filter-group">
+                    <label for="search">Поиск по названию:</label>
+                    <input type="text" id="search" name="search" value="{{ search_query }}" placeholder="Введите название..." class="form-control">
+                </div>
+
+                <!-- Выбор категории -->
+                <div class="filter-group">
+                    <label for="category">Категория:</label>
+                    <select id="category" name="category" class="form-control">
+                        <option value="">Все категории</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat }}" {% if cat == selected_category %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Сортировка -->
+                <div class="filter-group">
+                    <label for="sort">Сортировка цены:</label>
+                    <select id="sort" name="sort" class="form-control">
+                        <option value="" {% if not sort_by %}selected{% endif %}>По умолчанию</option>
+                        <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Сначала дешевле</option>
+                        <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Сначала дороже</option>
+                    </select>
+                </div>
+
+                <!-- Кнопки управления -->
+                <div class="actions">
+                    <button type="submit" class="btn btn-primary">Найти</button>
+                    <a href="/catalog" class="btn btn-secondary">Сбросить</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Сетка товаров -->
+        {% if products %}
+            <div class="products-grid">
+                {% for product in products %}
+                    <div class="product-card">
+                        <div class="product-image-wrap">
+                            {% if product.image %}
+                                <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}">
+                            {% else %}
+                                <div class="no-image">Нет фото</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="product-card-body">
+                            <span class="badge">{{ product.category or 'Общее' }}</span>
+                            <h3 class="product-title">{{ product.name }}</h3>
+
+                            <div class="product-card-footer">
+                                <div class="price">{{ "%.2f"|format(product.price) }} BYN</div>
+                                <div class="actions">
+                                    <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-secondary">Инфо</a>
+                                    <form action="{{ url_for('add_to_cart', product_id=product.id) }}" method="POST" style="margin:0;">
+                                        <button type="submit" class="btn btn-primary">В корзину</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 60px 0; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); margin-top: 20px;">
+                <h3 style="color: var(--text-main); font-size: 1.2rem;">По вашему запросу ничего не найдено</h3>
+                <p style="color: var(--text-muted); margin-top: 8px;">Попробуйте сбросить фильтры или изменить поисковый запрос.</p>
+                <a href="/catalog" class="btn btn-primary" style="margin-top: 16px;">Сбросить фильтры</a>
+            </div>
+        {% endif %}
+    </main>
+
+    <!-- Подвал -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 HARDWARE STORE. Все права защищены.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

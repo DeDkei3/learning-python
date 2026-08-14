@@ -1,0 +1,484 @@
+import os
+import sqlite3
+from flask import Flask, redirect, render_template, request, session, url_for
+
+# Фиксируем пути строго относительно папки, где лежит server.py (T:\project\Web)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static"),
+)
+
+app.secret_key = "super_secret_key_store"
+DB_PATH = os.path.join(BASE_DIR, "database.db")
+
+
+def get_db_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
+
+def init_db():
+    """Инициализация БД и АВТОМАТИЧЕСКОЕ наполнение, если база пустая."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS inventory (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            price REAL NOT NULL,
+            category TEXT NOT NULL,
+            image TEXT,
+            stock INTEGER DEFAULT 0
+        )
+    """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS characteristics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL,
+            key_name TEXT NOT NULL,
+            key_value TEXT NOT NULL,
+            FOREIGN KEY (product_id) REFERENCES inventory (id) ON DELETE CASCADE
+        )
+    """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_name TEXT,
+            phone TEXT,
+            address TEXT,
+            total_price REAL,
+            status TEXT DEFAULT 'Новый',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """
+    )
+
+    # Проверяем, есть ли товары. Если нет — наполняем автоматически!
+    cursor.execute("SELECT COUNT(*) FROM inventory")
+    count = cursor.fetchone()[0]
+
+    if count == 0:
+        print(
+            " База пуста. Выполняется автоматическое наполнение товарами..."
+        )
+        sample_products = [
+            (
+                "Игровая мышь Logitech G Pro X Superlight",
+                450.0,
+                "Периферия",
+                "Discord_7pOvegrtlF.png",
+                15,
+            ),
+            (
+                "Клавиатура Dark Project KD87A Gateron Teal",
+                320.0,
+                "Периферия",
+                "Capture001.png",
+                8,
+            ),
+            (
+                "Монитор Xiaomi Redmi G34WQ 34 Curved",
+                1150.0,
+                "Мониторы",
+                "Capture001.png",
+                5,
+            ),
+            (
+                "Видеокарта NVIDIA GeForce RTX 4060 Ti 8GB",
+                1600.0,
+                "Комплектующие",
+                "Discord_7pOvegrtlF.png",
+                4,
+            ),
+            (
+                "Процессор AMD Ryzen 5 5600 OEM",
+                420.0,
+                "Комплектующие",
+                "Capture001.png",
+                20,
+            ),
+            (
+                "Игровые наушники HyperX Cloud II Wireless",
+                390.0,
+                "Аудио",
+                "Discord_7pOvegrtlF.png",
+                12,
+            ),
+            (
+                "Коврик для мыши SteelSeries QCK Heavy XL",
+                95.0,
+                "Аксессуары",
+                "Capture001.png",
+                30,
+            ),
+        ]
+
+        for prod in sample_products:
+            cursor.execute(
+                "INSERT INTO inventory (name, price, category, image, stock) VALUES (?, ?, ?, ?, ?)",
+                prod,
+            )
+            pid = cursor.lastrowid
+            cursor.execute(
+                "INSERT INTO characteristics (product_id, key_name, key_value) VALUES (?, ?, ?)",
+                (pid, "Гарантия", "12 месяцев"),
+            )
+            cursor.execute(
+                "INSERT INTO characteristics (product_id, key_name, key_value) VALUES (?, ?, ?)",
+                (pid, "Состояние", "Новое"),
+            )
+
+        conn.commit()
+        print(" Автонаполнение завершено упешно!")
+
+    conn.close()
+
+
+init_db()
+
+
+# ==========================================
+# 1. ГЛАВНАЯ СТРАНИЦА И КАТАЛОГ
+# ==========================================
+
+
+@app.route("/")
+def index():
+    """Главная страница (index.html)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM inventory ORDER BY id DESC LIMIT 8")
+    products = cursor.fetchall()
+
+    cursor.execute(
+        "SELECT DISTINCT category FROM inventory WHERE category IS NOT NULL AND category != ''"
+    )
+    categories = [row["category"] for row in cursor.fetchall()]
+    conn.close()
+
+    return render_template(
+        "index.html", products=products, categories=categories
+    )
+
+
+@app.route("/catalog")
+def catalog():
+    """Каталог товаров"""
+    search_query = request.args.get("search", "").strip()
+    category_filter = request.args.get("category", "").strip()
+    sort_by = request.args.get("sort", "").strip()
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    query = "SELECT * FROM inventory WHERE 1=1"
+    params = []
+
+    if search_query:
+        query += " AND name LIKE ?"
+        params.append(f"%{search_query}%")
+
+    if category_filter and category_filter != "Все категории":
+        query += " AND category = ?"
+        params.append(category_filter)
+
+    if sort_by == "price_asc":
+        query += " ORDER BY price ASC"
+    elif sort_by == "price_desc":
+        query += " ORDER BY price DESC"
+    else:
+        query += " ORDER BY id DESC"
+
+    cursor.execute(query, params)
+    products = cursor.fetchall()
+
+    cursor.execute(
+        "SELECT DISTINCT category FROM inventory WHERE category IS NOT NULL AND category != '' ORDER BY category"
+    )
+    categories = [row["category"] for row in cursor.fetchall()]
+
+    conn.close()
+
+    return render_template(
+        "catalog.html",
+        products=products,
+        categories=categories,
+        selected_category=category_filter,
+        search_query=search_query,
+        sort_by=sort_by,
+    )
+
+
+@app.route("/product/<int:product_id>")
+def product_detail(product_id):
+    """Карточка товара"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM inventory WHERE id = ?", (product_id,))
+    product = cursor.fetchone()
+
+    cursor.execute(
+        "SELECT * FROM characteristics WHERE product_id = ?", (product_id,)
+    )
+    chars = cursor.fetchall()
+
+    conn.close()
+
+    if not product:
+        return "Товар не найден", 404
+
+    return render_template("product.html", product=product, chars=chars)
+
+
+# ==========================================
+# 2. КОРЗИНА И ОФОРМЛЕНИЕ
+# ==========================================
+
+
+@app.route("/cart")
+def view_cart():
+    """Корзина"""
+    cart = session.get("cart", {})
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cart_items = []
+    total_price = 0.0
+
+    for pid_str, quantity in cart.items():
+        cursor.execute("SELECT * FROM inventory WHERE id = ?", (int(pid_str),))
+        product = cursor.fetchone()
+        if product:
+            item_total = product["price"] * quantity
+            total_price += item_total
+            cart_items.append(
+                {
+                    "product": product,
+                    "quantity": quantity,
+                    "item_total": item_total,
+                }
+            )
+
+    conn.close()
+    return render_template(
+        "cart.html", cart_items=cart_items, total_price=total_price
+    )
+
+
+@app.route("/cart/add/<int:product_id>", methods=["POST"])
+def add_to_cart(product_id):
+    cart = session.get("cart", {})
+    pid_str = str(product_id)
+    cart[pid_str] = cart.get(pid_str, 0) + 1
+    session["cart"] = cart
+    session.modified = True
+    return redirect(request.referrer or url_for("view_cart"))
+
+
+@app.route("/cart/update/<int:product_id>", methods=["POST"])
+def update_cart(product_id):
+    cart = session.get("cart", {})
+    pid_str = str(product_id)
+    action = request.form.get("action")
+
+    if pid_str in cart:
+        if action == "increase":
+            cart[pid_str] += 1
+        elif action == "decrease":
+            cart[pid_str] -= 1
+            if cart[pid_str] <= 0:
+                del cart[pid_str]
+        elif action == "delete":
+            del cart[pid_str]
+
+    session["cart"] = cart
+    session.modified = True
+    return redirect(url_for("view_cart"))
+
+
+@app.route("/checkout", methods=["GET", "POST"])
+def checkout():
+    cart = session.get("cart", {})
+    if not cart:
+        return redirect(url_for("catalog"))
+
+    if request.method == "POST":
+        name = request.form.get("name")
+        phone = request.form.get("phone")
+        address = request.form.get("address")
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        total_price = 0.0
+        for pid_str, quantity in cart.items():
+            cursor.execute(
+                "SELECT price FROM inventory WHERE id = ?", (int(pid_str),)
+            )
+            p = cursor.fetchone()
+            if p:
+                total_price += p["price"] * quantity
+
+        cursor.execute(
+            "INSERT INTO orders (customer_name, phone, address, total_price, status) VALUES (?, ?, ?, ?, ?)",
+            (name, phone, address, total_price, "Новый"),
+        )
+        order_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+
+        session["cart"] = {}
+        session.modified = True
+        return render_template("order_success.html", order_id=order_id)
+
+    return render_template("checkout.html")
+
+
+@app.route("/order/<int:order_id>")
+def view_order(order_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM orders WHERE id = ?", (order_id,))
+    order = cursor.fetchone()
+    conn.close()
+
+    if not order:
+        return "Заказ не найден", 404
+
+    return render_template("order.html", order=order)
+
+
+# ==========================================
+# 3. АДМИН-ПАНЕЛЬ
+# ==========================================
+
+
+@app.route("/admin")
+def admin_panel():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM inventory ORDER BY id DESC")
+    products = cursor.fetchall()
+    cursor.execute("SELECT * FROM orders ORDER BY id DESC")
+    orders = cursor.fetchall()
+    conn.close()
+    return render_template("admin.html", products=products, orders=orders)
+
+
+@app.route("/admin/product/<int:product_id>")
+def admin_product_detail(product_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM inventory WHERE id = ?", (product_id,))
+    product = cursor.fetchone()
+    cursor.execute(
+        "SELECT * FROM characteristics WHERE product_id = ?", (product_id,)
+    )
+    chars = cursor.fetchall()
+    conn.close()
+
+    if not product:
+        return "Товар не найден", 404
+
+    return render_template("edit_product.html", product=product, chars=chars)
+
+
+@app.route("/admin/add", methods=["GET", "POST"])
+def add_product():
+    if request.method == "POST":
+        name = request.form.get("name")
+        category = request.form.get("category")
+        price = float(request.form.get("price", 0))
+        stock = int(request.form.get("stock", 0))
+
+        image_file = request.files.get("image")
+        image_name = ""
+        if image_file and image_file.filename != "":
+            upload_folder = os.path.join(app.static_folder, "uploads")
+            os.makedirs(upload_folder, exist_ok=True)
+            image_name = image_file.filename
+            image_file.save(os.path.join(upload_folder, image_name))
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO inventory (name, price, category, image, stock) VALUES (?, ?, ?, ?, ?)",
+            (name, price, category, image_name, stock),
+        )
+        product_id = cursor.lastrowid
+
+        char_keys = request.form.getlist("char_key[]")
+        char_values = request.form.getlist("char_value[]")
+        for k, v in zip(char_keys, char_values):
+            if k.strip() and v.strip():
+                cursor.execute(
+                    "INSERT INTO characteristics (product_id, key_name, key_value) VALUES (?, ?, ?)",
+                    (product_id, k.strip(), v.strip()),
+                )
+
+        conn.commit()
+        conn.close()
+        return redirect(url_for("admin_panel"))
+
+    return render_template("add_product.html")
+
+
+@app.route(
+    "/admin/product/<int:product_id>/add_char", methods=["POST"]
+)
+def add_characteristic(product_id):
+    key_name = request.form.get("key_name", "").strip()
+    key_value = request.form.get("key_value", "").strip()
+
+    if key_name and key_value:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO characteristics (product_id, key_name, key_value) VALUES (?, ?, ?)",
+            (product_id, key_name, key_value),
+        )
+        conn.commit()
+        conn.close()
+
+    return redirect(f"/admin/product/{product_id}")
+
+
+@app.route(
+    "/admin/status/<int:order_id>", methods=["POST"]
+)
+def update_order_status(order_id):
+    new_status = request.form.get("status")
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE orders SET status = ? WHERE id = ?", (new_status, order_id)
+    )
+    conn.commit()
+    conn.close()
+    return redirect(url_for("admin_panel"))
+
+
+@app.route("/admin/delete/<int:product_id>")
+def delete_product(product_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM inventory WHERE id = ?", (product_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("admin_panel"))
+
+
+if __name__ == "__main__":
+    app.run(debug=True, port=5000)

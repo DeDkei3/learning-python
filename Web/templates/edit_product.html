@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактировать товар</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color);">
+        <div>
+            <a href="/admin">← Назад в админку</a>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" style="position: static;">🌙 / ☀️</button>
+    </div>
+
+    <h2 style="margin-bottom: 20px;">✏️ Редактирование товара: {{ product.name }}</h2>
+    
+    <form method="POST" enctype="multipart/form-data" style="max-width: 700px; background: var(--filter-bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 30px;">
+        <label style="display: block; margin-bottom: 5px;">Название товара:</label>
+        <input type="text" name="name" value="{{ product.name }}" required style="width: 100%; padding: 8px; margin-bottom: 15px; background: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box;">
+
+        <label style="display: block; margin-bottom: 5px;">Категория:</label>
+        <input type="text" name="category" value="{{ product.category }}" required style="width: 100%; padding: 8px; margin-bottom: 15px; background: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box;">
+
+        <label style="display: block; margin-bottom: 5px;">Цена (руб.):</label>
+        <input type="number" step="0.01" name="price" value="{{ product.price }}" required style="width: 100%; padding: 8px; margin-bottom: 15px; background: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box;">
+
+        <label style="display: block; margin-bottom: 5px;">Количество на складе:</label>
+        <input type="number" name="stock" value="{{ product.stock }}" min="0" required style="width: 100%; padding: 8px; margin-bottom: 15px; background: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box;">
+
+        <label style="display: block; margin-bottom: 5px;">Текущая фотография:</label>
+        {% if product.image %}
+            <div style="margin-bottom: 10px;">
+                <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="" style="height: 80px; border-radius: 4px; object-fit: cover;">
+            </div>
+        {% else %}
+            <p style="color: #7f8c8d; font-size: 13px; margin-bottom: 10px;">Фото отсутствует</p>
+        {% endif %}
+        
+        <label style="display: block; margin-bottom: 5px;">Заменить фотографию:</label>
+        <input type="file" name="image" accept="image/*" style="margin-bottom: 20px;">
+
+        <h3 style="margin-bottom: 15px; font-size: 18px;">📊 Существующие характеристики</h3>
+        <div style="margin-bottom: 20px;">
+            {% for char in chars %}
+            <div style="display: grid !important; grid-template-columns: 1fr 1fr auto !important; gap: 10px !important; margin-bottom: 10px !important; align-items: center !important; width: 100% !important;">
+                <input type="hidden" name="char_id[]" value="{{ char.id }}">
+                <input type="text" name="char_key[]" value="{{ char.key_name }}" placeholder="Ключ" style="width: 100% !important; min-width: 0 !important; height: 38px !important; padding: 0 10px !important; background: #2b2b2b !important; color: #ffffff !important; border: 1px solid #444 !important; border-radius: 4px !important; box-sizing: border-box !important; font-size: 14px !important;">
+                <input type="text" name="char_value[]" value="{{ char.key_value }}" placeholder="Значение" style="width: 100% !important; min-width: 0 !important; height: 38px !important; padding: 0 10px !important; background: #2b2b2b !important; color: #ffffff !important; border: 1px solid #444 !important; border-radius: 4px !important; box-sizing: border-box !important; font-size: 14px !important;">
+                <a href="/admin/characteristic/delete/{{ char.id }}" style="width: auto !important; height: 38px !important; padding: 0 15px !important; background: #e74c3c !important; color: #ffffff !important; text-decoration: none !important; border-radius: 4px !important; font-size: 13px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; white-space: nowrap !important; margin: 0 !important;" onclick="return confirm('Удалить эту характеристику?')">Удалить</a>
+            </div>
+            {% else %}
+            <p style="color: #7f8c8d; font-size: 14px;">У этого товара пока нет характеристик.</p>
+            {% endfor %}
+        </div>
+
+        <h3 style="margin-bottom: 15px; font-size: 18px;">➕ Добавить новые характеристики</h3>
+        <div id="new-characteristics-container" style="margin-bottom: 15px;">
+            <!-- Динамические новые характеристики -->
+        </div>
+        
+        <button type="button" onclick="addNewCharacteristic()" style="background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-bottom: 25px; display: inline-block; width: auto;">+ Добавить еще характеристику</button>
+        <br>
+
+        <button type="submit" style="background: #27ae60; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; display: inline-block; width: auto;">Сохранить изменения</button>
+    </form>
+
+    <script>
+        function addNewCharacteristic() {
+            const container = document.getElementById('new-characteristics-container');
+            const row = document.createElement('div');
+            row.style.cssText = "display: grid !important; grid-template-columns: 1fr 1fr auto !important; gap: 10px !important; margin-bottom: 10px !important; align-items: center !important; width: 100% !important;";
+            row.innerHTML = `
+                <input type="text" name="new_char_key[]" placeholder="Ключ (например, Частота)" style="width: 100% !important; min-width: 0 !important; height: 38px !important; padding: 0 10px !important; background: #2b2b2b !important; color: #ffffff !important; border: 1px solid #444 !important; border-radius: 4px !important; box-sizing: border-box !important; font-size: 14px !important;">
+                <input type="text" name="new_char_value[]" placeholder="Значение (например, 3.2 ГГц)" style="width: 100% !important; min-width: 0 !important; height: 38px !important; padding: 0 10px !important; background: #2b2b2b !important; color: #ffffff !important; border: 1px solid #444 !important; border-radius: 4px !important; box-sizing: border-box !important; font-size: 14px !important;">
+                <button type="button" onclick="this.parentElement.remove()" style="width: auto !important; height: 38px !important; padding: 0 15px !important; background: #e74c3c !important; color: #ffffff !important; border: none !important; border-radius: 4px !important; font-size: 13px !important; cursor: pointer !important; white-space: nowrap !important; margin: 0 !important;">Удалить</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        }
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+    </script>
+</body>
+</html>

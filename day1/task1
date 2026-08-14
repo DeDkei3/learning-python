@@ -1,0 +1,4 @@
+# float позволяет вводить не только целые числа, но и дробные (например, 1.5)
+gb = float(input("take a gb u have: "))
+mb = gb *1024
+print((f"if u have {gb} u have {mb} "))

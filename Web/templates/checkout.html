@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Оформление заказа</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙 / ☀️</button>
+
+    <h2>📦 Оформление заказа</h2>
+
+    <div style="max-width: 500px; background: var(--filter-bg); border: 1px solid var(--border-color); padding: 20px; border-radius: 8px;">
+        <h3>Ваш заказ:</h3>
+        <ul>
+            {% for item in cart_items %}
+                <li>{{ item.product.name }} × {{ item.quantity }} шт. — <b>{{ item.subtotal }} руб.</b></li>
+            {% endfor %}
+        </ul>
+        <p style="font-size: 18px; margin-top: 15px;">Общая сумма: <b>{{ total_sum }} руб.</b></p>
+        
+        <form method="POST" style="margin-top: 20px;">
+            <label>Ваше имя и фамилия:</label>
+            <input type="text" name="name" placeholder="например, Александр" required style="width: 100%; padding: 10px; box-sizing: border-box; margin-bottom: 15px; background: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); border-radius: 4px;">
+
+            <button type="submit" style="background: #27ae60; width: 100%; padding: 12px; font-size: 16px;">Подтвердить и отправить заказ</button>
+        </form>
+    </div>
+
+    <br>
+    <a href="/cart">← Вернуться в корзину</a>
+
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        }
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+    </script>
+</body>
+</html>
