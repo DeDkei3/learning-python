@@ -1,6 +1,6 @@
 import random
-
-select = random.randint(1, 100)
+random.randint (1, 100) 
+sellect = random.randint (1, 100)
 while True:
     guess = int(input(" твоё число: "))
     if guess == sellect:
