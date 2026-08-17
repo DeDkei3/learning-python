@@ -8,7 +8,7 @@ response = requests.get(url) #отправка и получение данны�
 
 if response.status_code == 200: #проверка на работу
     data = response.json() #переобразование данных в json
-    print(f"Ник пользывателя: {data["name"]}") #запросы через принт  и вытаскивание нужного через data
+    print(f"Ник пользывателя: {data['name']}") #запросы через принт  и вытаскивание нужного через data
     print(f"пупбличный репазиториев: {data['public_repos']}")
     print(f"Дата регистрации: {data['created_at']}")
     print(f"email {data['email']}")
