@@ -1,17 +1,17 @@
-import requests
+import requests # это импорт исптрумента
 
-username = input("введите ник нейм польывателя на гетхабе:  ").strip()
+username = input("введите ник нейм польывателя на гетхабе:  ").strip() #задавание что юзернейм это ник чтобы потом использывать в поиске на гитхабе черенз апи
 
-url =f"https://api.github.com/users/{username}"
+url =f"https://api.github.com/users/{username}" #создавание ссылки для обращения испольуя юзер
 
-response = requests.get(url)
+response = requests.get(url) #отправка и получение данный по нашиму юрл
 
-if response.status_code == 200:
-    data = response.json()
-    print(f"Ник пользывателя: {data["name"]}")
+if response.status_code == 200: #проверка на работу
+    data = response.json() #переобразование данных в json
+    print(f"Ник пользывателя: {data["name"]}") #запросы через принт  и вытаскивание нужного через data
     print(f"пупбличный репазиториев: {data['public_repos']}")
     print(f"Дата регистрации: {data['created_at']}")
     print(f"email {data['email']}")
-    print(data.keys())
+    print(data.keys()) # собстеноо что конкретно можно спросить у data
 else:
     print("пользыватель не найден")
