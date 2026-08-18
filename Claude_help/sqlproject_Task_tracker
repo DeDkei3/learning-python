@@ -1,0 +1,92 @@
+import sqlite3
+
+conn = sqlite3.connect("tasks.db")
+
+cursor = conn.cursor()
+
+cursor.execute("CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY, text TEXT, priority INTEGER, is_done INTEGER)")
+
+def add_task():
+
+     task_text = input("текст задачи:  ")
+     task_priority = int(input("приоритет задачи от 1 до 5:  "))
+     
+ 
+     cursor.execute(f"insert into tasks (text, priority, is_done) values ('{task_text}', {task_priority}, '0')")    
+     conn.commit()
+
+
+def show_all_tasks():
+
+    cursor.execute("select * from tasks")
+    tasks = cursor.fetchall()
+    for task in tasks:
+        print(task)
+
+def edit_tasks():
+     show_all_tasks()
+     task_id = int(input("выберете id задачи которая будет изменена:  "))  
+     new_text = input("новый текст задачи:  ")
+     new_priority = int(input(" новый приоритет:  "))
+     cursor.execute(f"update tasks set text = '{new_text}', priority = {new_priority} where id = {task_id}")
+     print("новый список:  ")
+     conn.commit()
+     show_all_tasks()
+
+def is_done():
+     show_all_tasks()
+     task_id = int(input("выберете id выполненой задачи :  "))  
+     cursor.execute(f"update tasks set is_done = '1' where id = {task_id}")
+     conn.commit()
+
+def delite_task():
+    show_all_tasks()
+    task_id = int(input("выберете id  задачи которая будет удалена :  "))  
+    cursor.execute(f"DELETE FROM tasks WHERE id = {task_id}")
+    conn.commit()
+
+def show_completed_tasks():
+    cursor.execute("SELECT * FROM tasks WHERE is_done = 1")
+    tasks = cursor.fetchall()
+    for task in tasks:
+        print(task)
+
+def show_incompleted_tasks():
+    cursor.execute("SELECT * FROM tasks WHERE is_done = 0")
+    tasks = cursor.fetchall()
+    for task in tasks:
+        print(task)        
+
+while True:
+    user_input = int(input("что вы хотите сделать: 1-добавить задачу, 2-показать все задачи, 3-редактировать задачу, 4-пометить как выполненое, 5-чтобы удалить задачу, 6-выйти:  "))
+
+    if user_input == 1:
+   
+     add_task()   
+
+    elif user_input == 2:
+        user_choise = int(input("1- все, 2- выполненые, 3- невыполненые"))
+        if user_choise == 1:
+             show_all_tasks()
+        elif user_choise == 2:
+            show_completed_tasks()
+        elif user_choise == 3:
+            show_incompleted_tasks()
+        else:
+         print("введите число от 1 до 3")
+            
+
+    elif user_input == 3:
+        edit_tasks()
+
+    elif user_input == 4: 
+        is_done()
+
+    elif user_input == 5:
+        delite_task()
+
+    elif user_input == 6:
+        break
+    else:
+        print("введите число от 1 до 6")
+    
